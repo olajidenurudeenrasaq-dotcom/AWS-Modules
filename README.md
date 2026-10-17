@@ -15,7 +15,7 @@ The goal is to keep infrastructure logic modular and reusable so a parent reposi
 
 ```hcl
 module "vpc" {
-  source = "../AWS-Modules/vpc"
+  source = "git::https://github.com/olajidenurudeenrasaq-dotcom/AWS-Modules.git//vpc?ref=main"
 
   name               = "app-vpc"
   vpc_cidr           = "10.0.0.0/16"
@@ -25,7 +25,7 @@ module "vpc" {
 }
 
 module "web_security_group" {
-  source = "../AWS-Modules/security-group"
+  source = "git::https://github.com/olajidenurudeenrasaq-dotcom/AWS-Modules.git//security-group?ref=main"
 
   name        = "web-sg"
   description = "Allow HTTP and HTTPS traffic"
@@ -50,19 +50,19 @@ module "web_security_group" {
 }
 
 module "app_instance" {
-  source = "../AWS-Modules/ec2"
+  source = "git::https://github.com/olajidenurudeenrasaq-dotcom/AWS-Modules.git//ec2?ref=main"
 
-  name                 = "app-server"
-  instance_type        = "t3.micro"
-  subnet_id            = module.vpc.public_subnet_ids[0]
-  security_group_ids   = [module.web_security_group.security_group_id]
+  name                       = "app-server"
+  instance_type              = "t3.micro"
+  subnet_id                  = module.vpc.public_subnet_ids[0]
+  security_group_ids         = [module.web_security_group.security_group_id]
   associate_public_ip_address = true
-  tags                 = { Environment = "dev", Project = "app" }
+  tags                       = { Environment = "dev", Project = "app" }
 }
 ```
 
 ## Notes
 
-- Use a relative path for local module references during development.
-- For production or shared usage, consider pointing to a Git repo or a module registry.
+- The modules are now referenced from the GitHub `main` branch.
+- Use `?ref=main` for the branch version, or replace it with a tag/commit SHA for fixed releases.
 - Keep modules small, single-purpose, and reusable.

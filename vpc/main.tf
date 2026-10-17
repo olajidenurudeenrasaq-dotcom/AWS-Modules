@@ -29,6 +29,39 @@ resource "aws_subnet" "public" {
   })
 }
 
+resource "aws_eip" "nat" {
+  count = length(var.private_subnets) > 0 ? 1 : 0
+  domain = "vpc"
+
+  tags = merge(var.tags, {
+    Name = "${var.name}-nat-eip"
+  })
+}
+
+resource "aws_nat_gateway" "this" {
+  count = length(var.private_subnets) > 0 ? 1 : 0
+
+  allocation_id = aws_eip.nat[0].id
+  subnet_id     = aws_subnet.public[0].id
+
+  tags = merge(var.tags, {
+    Name = "${var.name}-nat-gateway"
+  })
+}
+
+resource "aws_subnet" "private" {
+  count = length(var.private_subnets)
+
+  vpc_id                  = aws_vpc.this.id
+  cidr_block              = var.private_subnets[count.index]
+  availability_zone       = length(var.private_availability_zones) > 0 ? var.private_availability_zones[count.index] : var.availability_zones[count.index]
+  map_public_ip_on_launch = false
+
+  tags = merge(var.tags, {
+    Name = "${var.name}-private-${count.index + 1}"
+  })
+}
+
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.this.id
 
@@ -42,9 +75,31 @@ resource "aws_route_table" "public" {
   })
 }
 
+resource "aws_route_table" "private" {
+  count = length(var.private_subnets) > 0 ? 1 : 0
+
+  vpc_id = aws_vpc.this.id
+
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.this[0].id
+  }
+
+  tags = merge(var.tags, {
+    Name = "${var.name}-private-rt"
+  })
+}
+
 resource "aws_route_table_association" "public" {
   count = length(aws_subnet.public)
 
   subnet_id      = aws_subnet.public[count.index].id
   route_table_id = aws_route_table.public.id
+}
+
+resource "aws_route_table_association" "private" {
+  count = length(aws_subnet.private)
+
+  subnet_id      = aws_subnet.private[count.index].id
+  route_table_id = aws_route_table.private[0].id
 }
