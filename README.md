@@ -17,11 +17,13 @@ The goal is to keep infrastructure logic modular and reusable so a parent reposi
 module "vpc" {
   source = "git::https://github.com/olajidenurudeenrasaq-dotcom/AWS-Modules.git//vpc?ref=main"
 
-  name               = "app-vpc"
-  vpc_cidr           = "10.0.0.0/16"
-  public_subnets     = ["10.0.1.0/24", "10.0.2.0/24"]
-  availability_zones = ["us-east-1a", "us-east-1b"]
-  tags               = { Environment = "dev" }
+  name                    = "app-vpc"
+  vpc_cidr                = "10.0.0.0/16"
+  public_subnets          = ["10.0.1.0/24", "10.0.2.0/24"]
+  private_subnets         = ["10.0.10.0/24", "10.0.11.0/24"]
+  availability_zones      = ["us-east-1a", "us-east-1b"]
+  private_availability_zones = ["us-east-1a", "us-east-1b"]
+  tags                    = { Environment = "dev" }
 }
 
 module "web_security_group" {
@@ -65,4 +67,5 @@ module "app_instance" {
 
 - The modules are now referenced from the GitHub `main` branch.
 - Use `?ref=main` for the branch version, or replace it with a tag/commit SHA for fixed releases.
+- The VPC module supports both public and private subnets, including optional private NAT routing.
 - Keep modules small, single-purpose, and reusable.
